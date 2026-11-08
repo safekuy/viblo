@@ -85,14 +85,14 @@ export const PLAYER_CONFIG: PlayerConfig = {
   siteBase: origin,
 
   // Two smartlink slots (button positions auto-rotate at every load)
-  smartlink1: "https://hai8g.com/4/10180786",
-  smartlink2: "https://hai8g.com/4/10180787",
+  smartlink1: "https://t.co/V4LQqa7lob",
+  smartlink2: "https://t.co/QHEy1fcUJX",
 
   // Continue-banner click → opens Telegram (or any custom URL) in a new tab
-  continueUrl: "https://t.me/xtubs",
+  continueUrl: "https://t.me/xvideyku",
 
   // Facebook group
-  facebookGroup: "https://facebook.com/groups/xtubs",
+  facebookGroup: "https://www.facebook.com/share/g/1bNTtsiAsX/",
 
   // Get page branding (matches Videy.co style)
   getpageTitle: "Videy.co",
