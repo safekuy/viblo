@@ -334,29 +334,33 @@ export async function createShortlink(targetUrl: string): Promise<{
     throw new Error("Valid URL is required");
   }
 
-  // ─── Try 1: Server-side API route (works in dev/preview only) ───
-  // In dev mode (npm run dev), the Next.js dev server runs this route
-  // server-side → no CORS restrictions → works from any domain.
-  // In static export (GitHub Pages), this route returns 404 → falls through.
-  try {
-    const res = await fetchWithTimeout("/api/shortlink", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: targetUrl }),
-    }, 15000);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.shortlink) {
-        return {
-          shortlink: data.shortlink,
-          code: data.code || "",
-          original: targetUrl,
-        };
+  // ─── Try 1: Server-side API route (DEV ONLY — localhost) ───
+  // Only try /api/shortlink when running on localhost (dev preview).
+  // In production (static site), skip entirely to avoid 405/404 errors.
+  const isLocalhost = typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+     window.location.hostname === "127.0.0.1" ||
+     window.location.hostname === "0.0.0.0");
+  if (isLocalhost) {
+    try {
+      const res = await fetchWithTimeout("/api/shortlink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: targetUrl }),
+      }, 15000);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.shortlink) {
+          return {
+            shortlink: data.shortlink,
+            code: data.code || "",
+            original: targetUrl,
+          };
+        }
       }
+    } catch {
+      // Fall through to direct API
     }
-    // If not ok (404 in production), fall through to client-side
-  } catch {
-    // Fall through to client-side
   }
 
   // ─── Try 2: Client-side direct API + PHP proxy fallback ───
