@@ -50,30 +50,21 @@ Full-screen video player with anti bom-click, anti bot, anti adblock, auto-pause
 3. The workflow in `.github/workflows/deploy.yml` will automatically build and deploy on every push to `main`.
 4. Your site will be live at `https://<username>.github.io/xtubs-player-pro/`
 
-### Step 3: CORS Setup (REQUIRED for shortlinks)
+### Step 3: Add CORS to your twinhd_safe.php (REQUIRED for shortlinks)
 
-**PHP runs on your hosting, NOT on GitHub Pages.** GitHub Pages only serves static files (HTML/CSS/JS). The PHP proxy must be uploaded to your hosting server.
+Your `twinhd_safe.php` only allows CORS from `twinhd.biz.id`. To use shortlinks from `viblo.biz.id`, GitHub Pages, or any other domain, add these **4 lines** to the TOP of your `twinhd_safe.php` (right after `<?php`):
 
-The twinhd API only allows CORS from `twinhd.biz.id`. The code follows the same pattern as your working script:
-1. Try direct API call first (`brightdailyhub.my.id/safe/twinhd_safe.php`)
-2. If CORS blocks it → automatically fall back to the proxy (`brightdailyhub.my.id/safe/twinhd_cors.php`)
+```php
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
+if ($_SERVER['REQUEST_METHOD']=='OPTIONS'){http_response_code(200);exit(0);}
+```
 
-**Upload `hosting/twinhd_cors.php`** to your hosting at `brightdailyhub.my.id/safe/` (same folder as `twinhd_safe.php`). That's it — the config already points to it as the fallback.
+That's it. Save the file. Shortlinks will now work from any domain.
 
-The proxy adds `Access-Control-Allow-Origin: *` and forwards requests to `twinhd_safe.php` via cURL.
-
-> Without uploading the proxy, shortlinks fall back to raw URLs.
+> Without these 4 lines, shortlinks won't work — the browser blocks the API call.
 > The player and landing page work regardless.
-
-## Project Structure — What Goes Where
-
-| File/Folder | Deploy To | Purpose |
-|---|---|---|
-| Everything in the repo (src/, public/, etc.) | **GitHub Pages** | Static site (HTML/CSS/JS) |
-| `hosting/twinhd_cors.php` | **Your hosting** (brightdailyhub.my.id) | PHP CORS proxy for shortlink API |
-
-**GitHub Pages** = static frontend (no PHP, no server)
-**Your hosting** = PHP backend (twinhd_safe.php + twinhd_cors.php)
 
 ## Configuration
 
@@ -98,7 +89,7 @@ To use a different shortlink service, edit `createShortlink()` in `src/lib/playe
 ## Routes (Hash Router)
 
 - `/#/` — Home page
-- `/#/generate` — Generator (3 shortlink outputs)
+- `/#/gen` — Generator (2 shortlink outputs)
 - `/#/v?id=<video-url>` — Video player
 - `/#/get?id=<video-url>` — 4-button landing page
 
@@ -112,7 +103,7 @@ src/
 │   └── globals.css               # Global styles
 ├── components/
 │   ├── player/
-│   │   ├── App.tsx               # Hash router (home/generate/v/get)
+│   │   ├── App.tsx               # Hash router (home/gen/v/get)
 │   │   ├── HomePage.tsx          # Landing page
 │   │   ├── GeneratePage.tsx      # Generator with 3 shortlink outputs
 │   │   ├── VideoPlayerPage.tsx   # Full-screen player with all anti features

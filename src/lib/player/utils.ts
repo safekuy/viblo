@@ -66,7 +66,7 @@ export function buildGetUrl(src: string, cfg?: PlayerConfig): string {
 // ---------------------------------------------------------------------
 export type Route =
   | { name: "home" }
-  | { name: "generate" }
+  | { name: "gen" }
   | { name: "v"; id: string }
   | { name: "get"; id: string }
   | { name: "unknown" };
@@ -86,7 +86,7 @@ export function parseHash(hash?: string): Route {
   const params = new URLSearchParams(query);
   const id = params.get("id") || "";
 
-  if (path === "/generate") return { name: "generate" };
+  if (path === "/gen") return { name: "gen" };
   if (path === "/v") return { name: "v", id };
   if (path === "/get") return { name: "get", id };
   return { name: "unknown" };

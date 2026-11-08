@@ -133,10 +133,14 @@ export const PLAYER_CONFIG: PlayerConfig = {
   theme: "dark",
 
   // Shortlink API — twinhd.biz.id safelink system
-  // Main API (direct call — works when deployed on twinhd.biz.id)
+  // The API must have CORS headers to allow requests from your domain.
+  // Add these 4 lines to the TOP of twinhd_safe.php (after <?php):
+  //   header('Access-Control-Allow-Origin: *');
+  //   header('Access-Control-Allow-Methods: POST, OPTIONS');
+  //   header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
+  //   if ($_SERVER['REQUEST_METHOD']=='OPTIONS'){http_response_code(200);exit(0);}
   shortlinkApi: "https://brightdailyhub.my.id/safe/twinhd_safe.php",
-  // Fallback (CORS proxy — works from any domain after uploading twinhd_cors.php)
-  shortlinkApiFallback: "https://brightdailyhub.my.id/safe/twinhd_cors.php",
+  shortlinkApiFallback: "",
   shortlinkDomain: "https://twinhd.biz.id",
 };
 

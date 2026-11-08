@@ -29,7 +29,7 @@ export default function App() {
   switch (route.name) {
     case "home":
       return <HomePage />;
-    case "generate":
+    case "gen":
       return <GeneratePage />;
     case "v":
       return <VideoPlayerPage key={route.id} id={route.id} />;
