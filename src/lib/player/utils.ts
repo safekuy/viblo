@@ -69,6 +69,7 @@ export type Route =
   | { name: "gen" }
   | { name: "v"; id: string }
   | { name: "get"; id: string }
+  | { name: "article"; id: string }
   | { name: "unknown" };
 
 export function parseHash(hash?: string): Route {
@@ -89,6 +90,13 @@ export function parseHash(hash?: string): Route {
   if (path === "/gen") return { name: "gen" };
   if (path === "/v") return { name: "v", id };
   if (path === "/get") return { name: "get", id };
+
+  // Article reading pages:  #/article/<id>
+  if (path.startsWith("/article/")) {
+    const slug = path.slice("/article/".length).trim();
+    if (slug) return { name: "article", id: slug };
+  }
+
   return { name: "unknown" };
 }
 

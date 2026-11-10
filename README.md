@@ -9,7 +9,7 @@ Full-screen video player with anti bom-click, anti bot, anti adblock, auto-pause
 - **Anti Bom-Click** — Sliding-window rate limiter (3 clicks/sec + 800ms cooldown)
 - **Anti Bot** — Detects WebDriver, headless Chrome, PhantomJS, automation markers
 - **Anti Adblock** — Bait-div detection with warning overlay
-- **Article-Portal Homepage** — Main page (`#/`) presents the site as a natural, organic-looking content portal: 24 complete English-language articles (~7,600 words) grouped into 4 topics (Streaming & Video, Internet & Technology, Privacy & Security, Everyday Digital Life) plus an About section. All tools stay reachable via `#/gen`, `#/v`, `#/get` and the discreet "Tools" links
+- **News-Portal Homepage** — Main page (`#/`) looks like a regular tech-magazine site: a responsive "Latest" grid of 24 English article cards (thumbnail + title + date) with category filter (Streaming / Internet / Privacy / Everyday Tech). Each card opens a dedicated reading page at `#/article/<id>` with full body text, hero image and related articles. **The generator is NOT shown or linked on the homepage** — `#/gen`, `#/v`, `#/get` keep working via their direct URLs
 - **Full-Screen Player** — 100vw × 100vh, responsive across PC/laptop/mobile
 - **Auto-Pause (2x Max)** — Pauses at 30s and 60s, then plays to end
 - **Continue Banner** — Opens Telegram/custom URL in new tab (no page navigation)
@@ -114,8 +114,10 @@ src/
 │   └── globals.css               # Global styles
 ├── components/
 │   ├── player/
-│   │   ├── App.tsx               # Hash router (home/gen/v/get)
-│   │   ├── HomePage.tsx          # Article-portal homepage (SEO-friendly)
+│   │   ├── App.tsx               # Hash router (home/article/gen/v/get)
+│   │   ├── HomePage.tsx          # News-grid homepage (Latest + category filter)
+│   │   ├── ArticlePage.tsx       # Article reading page (#/article/<id>)
+│   │   ├── ArticleCard.tsx       # Shared thumbnail card (image+title+date)
 │   │   ├── GeneratePage.tsx      # Generator with 3 shortlink outputs
 │   │   ├── VideoPlayerPage.tsx   # Full-screen player with all anti features
 │   │   ├── HistatsTracker.tsx    # Histats analytics injector (player only)
@@ -123,8 +125,14 @@ src/
 │   └── ui/                       # shadcn/ui components
 ├── lib/
 │   └── player/
+│       ├── articles.ts           # 24-article data module (shared by grid & reader)
 │       ├── config.ts             # All configuration (edit this!)
 │       └── utils.ts              # Encoding, anti-bot, anti-adblock, shortlink
+
+public/
+├── articles/                     # 24 article thumbnails (JPG, ~1.4 MB total)
+├── logo.svg
+└── robots.txt
 .github/
 └── workflows/
     └── deploy.yml                # GitHub Pages auto-deploy workflow

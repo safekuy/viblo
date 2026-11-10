@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { parseHash } from "@/lib/player/utils";
 import HomePage from "@/components/player/HomePage";
+import ArticlePage from "@/components/player/ArticlePage";
 import GeneratePage from "@/components/player/GeneratePage";
 import VideoPlayerPage from "@/components/player/VideoPlayerPage";
 import GetPage from "@/components/player/GetPage";
@@ -29,6 +30,8 @@ export default function App() {
   switch (route.name) {
     case "home":
       return <HomePage />;
+    case "article":
+      return <ArticlePage key={route.id} id={route.id} />;
     case "gen":
       return <GeneratePage />;
     case "v":
