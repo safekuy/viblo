@@ -10,6 +10,7 @@ import {
   makeClickGuard,
   runAntiBotChecks,
 } from "@/lib/player/utils";
+import { useHistatsTracker } from "@/components/player/HistatsTracker";
 
 type PauseState = "idle" | "paused" | "redirecting";
 
@@ -63,6 +64,10 @@ export default function VideoPlayerPage({ id }: { id: string }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
+
+  // Histats analytics — injects the Histats script once on the player page
+  // (fires on all player screens: normal, bot-block, and adblock warning).
+  useHistatsTracker();
 
   // Anti-adblock detection
   useEffect(() => {

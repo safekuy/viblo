@@ -9,6 +9,7 @@ Full-screen video player with anti bom-click, anti bot, anti adblock, auto-pause
 - **Anti Bom-Click** — Sliding-window rate limiter (3 clicks/sec + 800ms cooldown)
 - **Anti Bot** — Detects WebDriver, headless Chrome, PhantomJS, automation markers
 - **Anti Adblock** — Bait-div detection with warning overlay
+- **Article-Portal Homepage** — Main page (`#/`) presents the site as a natural, organic-looking content portal: 24 complete English-language articles (~7,600 words) grouped into 4 topics (Streaming & Video, Internet & Technology, Privacy & Security, Everyday Digital Life) plus an About section. All tools stay reachable via `#/gen`, `#/v`, `#/get` and the discreet "Tools" links
 - **Full-Screen Player** — 100vw × 100vh, responsive across PC/laptop/mobile
 - **Auto-Pause (2x Max)** — Pauses at 30s and 60s, then plays to end
 - **Continue Banner** — Opens Telegram/custom URL in new tab (no page navigation)
@@ -17,6 +18,7 @@ Full-screen video player with anti bom-click, anti bot, anti adblock, auto-pause
 - **4-Button Landing Page** — Auto-rotated destinations, Videy.co-style design
 - **CDN Source Detection** — Auto-detects Videy, Aceling, Slicedrive, Xfollow, Xfree, Twimg
 - **referrerPolicy="no-referrer"** — Bypasses CDN cross-origin blocks
+- **Histats Tracker (Player + Landing)** — Auto-injects your Histats analytics script on `/#/v` and `/#/get` (configurable in `config.ts`)
 
 ## Tech Stack
 
@@ -77,6 +79,15 @@ Edit `src/lib/player/config.ts` to change:
 - `maxPauses` — Max auto-pause count (default: 2)
 - `getpageTitle`, `getpageDescription`, `getpageFooter` — Landing page branding
 
+### Histats Tracker (player + landing page)
+
+The player route (`/#/v`) **and** the 4-button landing page (`/#/get`) automatically inject the Histats async script once per page load (guarded — no double injection when navigating between routes). Configure it in `src/lib/player/config.ts` → `histats`:
+
+- `enabled` — `true`/`false` master switch
+- `userId` — **your Histats numeric ID** (digits only). From a snippet like `_Hasync.push(['Histats.start', '1,4973582,4,0,0,0,00010000'])` the ID is `4973582`. Leave `""` to disable.
+- `startParams` — the params after the ID (default `"4,0,0,0,00010000"`)
+- `noscriptPixel` — also fire the `0.gif` pixel (equivalent of Histats' `<noscript>` block)
+
 ## Shortlink API
 
 The shortlink logic runs **client-side** (in the browser). It calls your twinhd.biz.id safelink API directly:
@@ -104,9 +115,10 @@ src/
 ├── components/
 │   ├── player/
 │   │   ├── App.tsx               # Hash router (home/gen/v/get)
-│   │   ├── HomePage.tsx          # Landing page
+│   │   ├── HomePage.tsx          # Article-portal homepage (SEO-friendly)
 │   │   ├── GeneratePage.tsx      # Generator with 3 shortlink outputs
 │   │   ├── VideoPlayerPage.tsx   # Full-screen player with all anti features
+│   │   ├── HistatsTracker.tsx    # Histats analytics injector (player only)
 │   │   └── GetPage.tsx           # 4-button landing page (Videy.co style)
 │   └── ui/                       # shadcn/ui components
 ├── lib/

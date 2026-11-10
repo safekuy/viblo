@@ -65,6 +65,22 @@ export type PlayerConfig = {
   // ---- THEME ----
   theme: "dark" | "light";
 
+  // ---- HISTATS TRACKER (player page only) ----
+  // Injects the Histats analytics/visitor-counter script on the video player
+  // route (/#/v). Get your values from the Histats code they give you:
+  //   _Hasync.push(['Histats.start', '1,4973582,4,0,0,0,00010000']);
+  //                          userId = 4973582   startParams = 4,0,0,0,00010000
+  // Leave userId empty ("") to disable the tracker even if enabled = true.
+  histats: {
+    enabled: boolean;
+    // Numeric Histats site ID (digits only, from your Histats snippet)
+    userId: string;
+    // Params after the userId in Histats.start (usually "4,0,0,0,00010000")
+    startParams: string;
+    // Also append the 1x1 noscript-style pixel (0.gif) like the original snippet
+    noscriptPixel: boolean;
+  };
+
   // ---- SHORTLINK API (client-side, follows user's script pattern) ----
   // Pattern: try main API → if CORS fails → fall back to apiFallback (proxy)
   // The twinhd safelink API only allows CORS from twinhd.biz.id.
@@ -142,6 +158,15 @@ export const PLAYER_CONFIG: PlayerConfig = {
   shortlinkApi: "https://brightdailyhub.my.id/safe/twinhd_safe.php",
   shortlinkApiFallback: "",
   shortlinkDomain: "https://twinhd.biz.id",
+
+  // Histats tracker — paste YOUR Histats ID here (digits only).
+  // Example: Histats.start '1,4973582,4,0,0,0,00010000' → userId: "4973582"
+  histats: {
+    enabled: true,
+    userId: "4996898", // ← GANTI dengan ID Histats kamu (angka saja)
+    startParams: "4,0,0,0,00010000",
+    noscriptPixel: true,
+  },
 };
 
 // Helper to read config at runtime (so siteBase reflects current origin)

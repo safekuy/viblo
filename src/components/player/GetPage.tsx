@@ -7,6 +7,7 @@ import {
   idToSource,
   makeClickGuard,
 } from "@/lib/player/utils";
+import { useHistatsTracker } from "@/components/player/HistatsTracker";
 type BtnDef = {
   key: string;
   label: string;
@@ -45,6 +46,11 @@ export default function GetPage({ id }: { id: string }) {
   // object each call, which would cause useMemo/useEffect infinite loops)
   const cfg = useMemo(() => getConfig(), []);
   const [clickGuard] = useState(() => makeClickGuard(cfg));
+
+  // Histats analytics — injects the Histats script on this landing page.
+  // Guarded by a module-level flag: the script is injected ONCE per full
+  // page load, even if the user navigates between #/get and #/v.
+  useHistatsTracker();
 
   const [source, setSource] = useState("");
   const [onlineCount, setOnlineCount] = useState(
