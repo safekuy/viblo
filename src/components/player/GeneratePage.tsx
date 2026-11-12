@@ -98,8 +98,8 @@ export default function GeneratePage() {
       {
         badge: "OUT 1",
         badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
-        icon: "✨",
-        label: "Player V2",
+        icon: "A very interesting video",
+        label: "✨",
         url: playerUrl,
         shortlink: null,
         loading: true,
@@ -108,8 +108,8 @@ export default function GeneratePage() {
       {
         badge: "OUT 2",
         badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
-        icon: "✅",
-        label: "Landing Page 4 Button",
+        icon: "For HD 1080P",
+        label: "✅",
         url: landingUrl,
         shortlink: null,
         loading: true,
