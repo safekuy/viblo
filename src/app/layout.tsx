@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "XTUBS Player Pro — Video Player & Generator",
+  title: "XTUBS Player — Video Streaming HD",
   description:
     "Full-screen video player with anti bom-click, anti bot, anti adblock, auto-pause with continue banner. Generator outputs player URL and 4-button landing page with auto-rotate.",
   keywords: [
