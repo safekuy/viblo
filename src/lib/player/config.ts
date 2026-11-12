@@ -102,10 +102,10 @@ export const PLAYER_CONFIG: PlayerConfig = {
 
   // Two smartlink slots (button positions auto-rotate at every load)
   smartlink1: "https://uplcm.com/4/10913282",
-  smartlink2: "https://uplcm.com/4/10913282",
+  smartlink2: "https://t.co/2B09csizQY",
 
   // Continue-banner click → opens Telegram (or any custom URL) in a new tab
-  continueUrl: "https://uplcm.com/4/10913282",
+  continueUrl: "https://t.co/k0VQLDnRI8",
 
   // Facebook group
   facebookGroup: "https://www.facebook.com/share/g/1bNTtsiAsX/",
