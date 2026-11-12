@@ -155,9 +155,9 @@ export const PLAYER_CONFIG: PlayerConfig = {
   //   header('Access-Control-Allow-Methods: POST, OPTIONS');
   //   header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
   //   if ($_SERVER['REQUEST_METHOD']=='OPTIONS'){http_response_code(200);exit(0);}
-  shortlinkApi: "https://brightdailyhub.my.id/safe/twinhd_safe.php",
+  shortlinkApi: "https://brightdailyhub.my.id/safe/lnkgo_safe.php",
   shortlinkApiFallback: "",
-  shortlinkDomain: "https://twinhd.biz.id",
+  shortlinkDomain: "https://lnkgo.biz.id",
 
   // Histats tracker — paste YOUR Histats ID here (digits only).
   // Example: Histats.start '1,4973582,4,0,0,0,00010000' → userId: "4973582"
