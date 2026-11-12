@@ -232,9 +232,9 @@ export default function GeneratePage() {
           </h1>
           <p className="text-xs text-slate-400 leading-relaxed">
             <span className="text-white">2 Output:</span>{" "}
-            <span className="text-cyan-400">A very interesting video<br></span>{" "}
-            <span className="text-slate-600">•</span>{" "}
-            <span className="text-cyan-400">For HD 1080P<br></span>
+            <span className="text-cyan-400"></span>{" "}
+            <span className="text-slate-600"></span>{" "}
+            <span className="text-cyan-400"></span>
           </p>
         </div>
 
