@@ -44,6 +44,10 @@ function detectSource(url: string): string {
   return "Custom";
 }
 
+function randomEmoji(pool: string[]): string {
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function detectFilename(url: string): string {
   try {
     const u = new URL(url);
@@ -98,8 +102,8 @@ export default function GeneratePage() {
       {
         badge: "OUT 1",
         badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
-        icon: "A very interesting video",
-        label: "✨",
+        icon: "A very interesting video.",
+        label: randomEmoji(["✨", "🔥", "🎬", "🍿", "⭐", "💫", "🎞️"]),
         url: playerUrl,
         shortlink: null,
         loading: true,
@@ -109,7 +113,7 @@ export default function GeneratePage() {
         badge: "OUT 2",
         badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
         icon: "For HD 1080P",
-        label: "✅",
+        label: randomEmoji(["✅", "🎥", "📺", "💎", "🚀", "🌟", "🔹"]),
         url: landingUrl,
         shortlink: null,
         loading: true,
@@ -179,7 +183,7 @@ export default function GeneratePage() {
   const handleCopyAll = async () => {
     if (!outputs) return;
     const allText = outputs
-      .map((o) => `${o.badge} — ${o.label}: ${o.shortlink || o.url}`)
+      .map((o) => `${o.icon}\n ${o.label}${o.shortlink || o.url}`)
       .join("\n");
     const ok = await copyText(allText);
     showToast(ok ? "All URLs copied!" : "Failed to copy");
@@ -362,14 +366,14 @@ export default function GeneratePage() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm">{out.icon}</span>
+                        <span className="text-sm">{out.label}</span>
                         <span className="text-xs font-mono text-white break-all">
                           {out.shortlink}
                         </span>
                       </div>
                     )}
                     <div className="text-[10px] text-slate-600 mt-0.5">
-                      {out.label}
+                      {out.icon}
                     </div>
                   </div>
 
