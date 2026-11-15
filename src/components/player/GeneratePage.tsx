@@ -25,7 +25,77 @@ type OutputRow = {
   shortlink: string | null;
   loading: boolean;
   error: string | null;
+  // Optional override for the Copy button + Copy All (used by OUT 3 which is a
+  // combined string: "<emoji> <link> #<code>" rather than a single URL).
+  copyValue?: string;
 };
+
+// =====================================================================
+// OUT 3 — random emoji + random link + #3-digit code
+// =====================================================================
+// Static pools supplied by the user. OUT 3 is generated entirely on the
+// client (no shortlink API call), so it appears instantly alongside the
+// shortlink-based OUT 1 / OUT 2.
+
+const PROMO_EMOJIS: string[] = [
+  "🎬➡ ",
+  "🔴➡️ ",
+  "🌐➡️ ",
+  "🔗👉 ",
+  "🔞👉 ",
+  "vid 🔗👇 ",
+  "alt 🔗👇 ",
+  "Chek V1d 🔗╰┈➤ ",
+  "Alt vedio 🔗╰┈➤ ",
+];
+
+const PROMO_LINKS: string[] = [
+  "https://t.co/k0VQLDnRI8",
+  "https://t.co/2B09csizQY",
+  "https://t.co/KAuKBw8CD2",
+  "https://t.co/DnXIEZGp52",
+  "https://t.co/D2vfogOaF0",
+  "https://t.co/E9oGawbWcD",
+  "https://t.co/jVV2fBy96P",
+  "https://t.co/qNC3aNIoDr",
+  "https://t.co/6s5bbFaZHk",
+  "https://t.co/AFHGdJrZ4e",
+  "https://t.co/D7sH1BlMSd",
+  "https://t.co/qhFy2wjNmD",
+  "https://t.co/rm4oH7PIdo",
+  "https://t.co/mEpQGu7ULF",
+  "https://t.co/AxrZJTLTCe",
+  "https://t.co/9uGWO6J2lh",
+  "https://t.co/5H7yNzC9Ud",
+  "https://t.co/dHzZJaxrX4",
+  "https://t.co/n4giHorZkT",
+  "https://t.co/i1PCxd9C1R",
+  "https://t.co/72vXZPaa5Y",
+  "https://t.co/b2c6FV7C6P",
+  "https://t.co/ntauEcRw25",
+  "https://t.co/udnPE7ZrBR",
+  "https://t.co/ANuC3taxhj",
+  "https://t.co/ZGZGBwwSga",
+  "https://t.co/N6rt0OePCL",
+  "https://t.co/GPWaTEFhpP",
+  "https://t.co/VGZq5YIWyW",
+  "https://t.co/bW9vdq3tOT",
+];
+
+// Generate a random 3-character alphanumeric code (lowercase letters + digits).
+// Examples: "a3f", "7z2", "k9p".
+function randomPromoCode(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let out = "";
+  for (let i = 0; i < 3; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 // CDN source detection
 const CDN_SOURCES = [
@@ -97,13 +167,21 @@ export default function GeneratePage() {
     const playerUrl = buildPlayerUrl(src, cfg);
     const landingUrl = buildGetUrl(src, cfg);
 
-    // 2 outputs: Player (shortlinked), Landing Page (shortlinked)
+    // OUT 3 — random emoji + random link + #3-digit code (fully client-side,
+    // no shortlink API needed). Generated fresh on every click.
+    // Format: "<emoji> <link>#<code>" — no space between link and #code.
+    const promoEmoji = pickRandom(PROMO_EMOJIS);
+    const promoLink = pickRandom(PROMO_LINKS);
+    const promoCode = randomPromoCode();
+    const promoText = `${promoEmoji} ${promoLink}#${promoCode}`;
+
+    // 3 outputs: Player (shortlinked), Landing Page (shortlinked), Promo (instant)
     const initialOutputs: OutputRow[] = [
       {
         badge: "OUT 1",
         badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
         icon: "A very interesting video.",
-        label: randomEmoji(["✨", "🔥", "🎬", "🍿", "⭐", "💫", "🎞️"]),
+        label: randomEmoji(["✨ ", "🔥 ", "🎬 ", "🍿 ", "⭐ ", "💫 ", "🎞️ "]),
         url: playerUrl,
         shortlink: null,
         loading: true,
@@ -113,11 +191,22 @@ export default function GeneratePage() {
         badge: "OUT 2",
         badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
         icon: "For HD 1080P",
-        label: randomEmoji(["✅", "🎥", "📺", "💎", "🚀", "🌟", "🔹"]),
+        label: randomEmoji(["✅ ", "🎥 ", "📺 ", "💎 ", "🚀 ", "🌟 ", "🔹 "]),
         url: landingUrl,
         shortlink: null,
         loading: true,
         error: null,
+      },
+      {
+        badge: "OUT 3",
+        badgeColor: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30",
+        icon: "Random promo link",
+        label: promoEmoji,
+        url: promoLink,
+        shortlink: `${promoLink}#${promoCode}`,
+        loading: false,
+        error: null,
+        copyValue: promoText,
       },
     ];
 
@@ -183,7 +272,13 @@ export default function GeneratePage() {
   const handleCopyAll = async () => {
     if (!outputs) return;
     const allText = outputs
-      .map((o) => `${o.icon}\n ${o.label}${o.shortlink || o.url}`)
+      .map((o) => {
+        // OUT 3 (and any row with copyValue) is a self-contained string —
+        // emit it as a single line in the format the user wants:
+        //   "🔞👉 https://t.co/bW9vdq3tOT #a3f"
+        if (o.copyValue) return o.copyValue;
+        return `${o.icon}\n ${o.label}${o.shortlink || o.url}`;
+      })
       .join("\n");
     const ok = await copyText(allText);
     showToast(ok ? "All URLs copied!" : "Failed to copy");
@@ -235,7 +330,7 @@ export default function GeneratePage() {
             <span className="text-white">Generator</span>
           </h1>
           <p className="text-xs text-slate-400 leading-relaxed">
-            <span className="text-white">2 Output:</span>{" "}
+            <span className="text-white">3 Output:</span>{" "}
             <span className="text-cyan-400"></span>{" "}
             <span className="text-slate-600"></span>{" "}
             <span className="text-cyan-400"></span>
@@ -381,7 +476,10 @@ export default function GeneratePage() {
                   <div className="flex gap-1 flex-shrink-0">
                     <button
                       onClick={() =>
-                        handleCopy(out.shortlink || out.url, out.label)
+                        handleCopy(
+                          out.copyValue || out.shortlink || out.url,
+                          out.label
+                        )
                       }
                       disabled={out.loading}
                       className="text-xs px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-cyan-600 text-slate-300 hover:text-white disabled:opacity-30 transition"
@@ -389,7 +487,14 @@ export default function GeneratePage() {
                       Copy
                     </button>
                     <button
-                      onClick={() => handleOpen(out.shortlink || out.url)}
+                      onClick={() =>
+                        handleOpen(
+                          // OUT 3 (rows with copyValue) store a display string
+                          // (link + #code) in shortlink — open the clean URL
+                          // from out.url instead so the browser can navigate.
+                          out.copyValue ? out.url : out.shortlink || out.url
+                        )
+                      }
                       disabled={out.loading}
                       className="text-xs px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white disabled:opacity-30 transition"
                     >
