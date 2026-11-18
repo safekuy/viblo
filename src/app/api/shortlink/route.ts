@@ -3,18 +3,23 @@
 // the client falls back to direct API → PHP proxy.
 //
 // This route makes shortlinks work immediately in the preview panel
-// without needing to upload twinhd_cors.php first.
+// without needing to upload twig_cors.php first.
 
-const SHORTLINK_API = "https://brightdailyhub.my.id/safe/twinhd_safe.php";
-const SHORTLINK_DOMAIN = "https://twinhd.biz.id";
+// Kept in sync with src/lib/player/config.ts (production endpoints)
+const SHORTLINK_API = "https://brightdailyhub.my.id/safe/twig_safe.php";
+const SHORTLINK_DOMAIN = "https://twig.biz.id";
 
 function generateCode(): string {
   return Math.random().toString(36).substring(2, 7);
 }
 
-async function apiRequest(action: string, body?: Record<string, unknown>) {
+async function apiRequest(
+  api: string,
+  action: string,
+  body?: Record<string, unknown>
+) {
   try {
-    const res = await fetch(SHORTLINK_API, {
+    const res = await fetch(api, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...body }),
@@ -34,11 +39,26 @@ export async function POST(request: Request) {
       return Response.json({ error: "Valid URL required" }, { status: 400 });
     }
 
+    // Output domain, paired API endpoint + .mp4 option (mirror of the /gen
+    // page switches). Defaults: twig.biz.id / twig_safe.php / WITH .mp4.
+    const domain: string =
+      typeof body.domain === "string" && body.domain.trim()
+        ? body.domain.trim().replace(/\/+$/, "")
+        : SHORTLINK_DOMAIN;
+    // API endpoint paired with the selected output domain:
+    //   twig.biz.id → twig_safe.php   |   lnkgo.biz.id → lnkgo_safe.php
+    const api: string =
+      typeof body.api === "string" && /^https?:\/\//i.test(body.api.trim())
+        ? body.api.trim()
+        : SHORTLINK_API;
+    const useMp4: boolean = body.useMp4 !== false;
+    const ext = useMp4 ? ".mp4" : "";
+
     // Generate unique code (up to 10 attempts)
     let code = "";
     for (let i = 0; i < 10; i++) {
       const candidate = generateCode();
-      const check = await apiRequest("is_code_unique", { code: candidate });
+      const check = await apiRequest(api, "is_code_unique", { code: candidate });
       if (check.success && check.data === true) {
         code = candidate;
         break;
@@ -49,13 +69,13 @@ export async function POST(request: Request) {
     }
 
     // Create the link
-    const create = await apiRequest("create_link", { code, url: targetUrl });
+    const create = await apiRequest(api, "create_link", { code, url: targetUrl });
     if (!create.success || !create.data) {
       return Response.json({ error: create.error || "Failed to create" }, { status: 500 });
     }
 
     return Response.json({
-      shortlink: `${SHORTLINK_DOMAIN}/#${code}`,
+      shortlink: `${domain}/${code}${ext}`,
       code,
       original: targetUrl,
     });

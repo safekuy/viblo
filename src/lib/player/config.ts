@@ -46,6 +46,12 @@ export type PlayerConfig = {
   shortlinkApi: string;
   shortlinkApiFallback: string;
   shortlinkDomain: string;
+
+  // ---- GENERATOR OUTPUT DOMAINS ----
+  // Domains available as shortlink output targets on the /gen page.
+  // Each one has its own ON/OFF switch on the generator page AND its own
+  // shortlink API endpoint (domain + api are paired 1:1).
+  outputDomains: { domain: string; api: string }[];
 };
 
 const origin =
@@ -105,6 +111,17 @@ export const PLAYER_CONFIG: PlayerConfig = {
   shortlinkApi: "https://brightdailyhub.my.id/safe/twig_safe.php",
   shortlinkApiFallback: "",
   shortlinkDomain: "https://twig.biz.id",
+
+  outputDomains: [
+    {
+      domain: "https://twig.biz.id",
+      api: "https://brightdailyhub.my.id/safe/twig_safe.php",
+    },
+    {
+      domain: "https://lnkgo.biz.id",
+      api: "https://brightdailyhub.my.id/safe/lnkgo_safe.php",
+    },
+  ],
 
   histats: {
     enabled: true,

@@ -298,10 +298,29 @@ export function idToSource(id: string): string {
 //   1. Try main API (cfg.shortlinkApi) directly
 //   2. If CORS fails ("Failed to fetch"), switch to apiFallback (proxy)
 //   3. Retry up to 5 times per endpoint with new random codes
-//   4. Shortlink format: https://twinhd.biz.id/#<5-char-code>
+//   4. Shortlink format (path-based, chosen on the /gen page):
+//        with .mp4 (default):  https://twig.biz.id/<code>.mp4
+//        without .mp4:         https://twig.biz.id/<code>
 //
-// The apiFallback is the PHP CORS proxy (twinhd_cors.php) on the user's
+// The apiFallback is the PHP CORS proxy (twig_cors.php) on the user's
 // hosting. Upload it once → shortlinks work from any domain.
+
+export type ShortlinkOptions = {
+  /** Output domain prefix, e.g. "https://twig.biz.id". Defaults to cfg.shortlinkDomain. */
+  domain?: string;
+  /** Shortlink API endpoint (create_link/is_code_unique). Defaults to cfg.shortlinkApi. */
+  api?: string;
+  /** Append ".mp4" to the code path. Default: true (with .mp4). */
+  useMp4?: boolean;
+};
+
+// Build the display URL for a shortlink code:
+//   useMp4 !== false → https://<domain>/<code>.mp4
+//   useMp4 === false → https://<domain>/<code>
+export function buildShortlinkUrl(domain: string, code: string, useMp4 = true): string {
+  const base = (domain || "").replace(/\/+$/, "");
+  return `${base}/${code}${useMp4 ? ".mp4" : ""}`;
+}
 
 function generateShortCode(): string {
   return Math.random().toString(36).substring(2, 7);
@@ -331,12 +350,21 @@ function fetchWithTimeout(
   });
 }
 
-export async function createShortlink(targetUrl: string): Promise<{
+export async function createShortlink(
+  targetUrl: string,
+  opts?: ShortlinkOptions
+): Promise<{
   shortlink: string;
   code: string;
   original: string;
 }> {
   const cfg = getConfig();
+  const domain = (opts?.domain || cfg.shortlinkDomain).replace(/\/+$/, "");
+  // API endpoint paired with the selected output domain (twig → twig_safe.php,
+  // lnkgo → lnkgo_safe.php). Falls back to cfg.shortlinkApi.
+  const api = opts?.api || cfg.shortlinkApi;
+  // Default ON — output links end with .mp4 unless explicitly disabled
+  const useMp4 = opts?.useMp4 !== false;
 
   if (!targetUrl || !/^https?:\/\//i.test(targetUrl)) {
     throw new Error("Valid URL is required");
@@ -354,7 +382,7 @@ export async function createShortlink(targetUrl: string): Promise<{
       const res = await fetchWithTimeout("/api/shortlink", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: targetUrl }),
+        body: JSON.stringify({ url: targetUrl, domain, api, useMp4 }),
       }, 15000);
       if (res.ok) {
         const data = await res.json();
@@ -373,7 +401,8 @@ export async function createShortlink(targetUrl: string): Promise<{
 
   // ─── Try 2: Client-side direct API + PHP proxy fallback ───
   // Pattern from user's script: try direct API → if CORS fails → try proxy
-  const endpoints = [cfg.shortlinkApi];
+  // First endpoint = the API paired with the selected output domain.
+  const endpoints = [api];
   if (cfg.shortlinkApiFallback) {
     endpoints.push(cfg.shortlinkApiFallback);
   }
@@ -409,7 +438,7 @@ export async function createShortlink(targetUrl: string): Promise<{
           if (data && data.success && data.data) {
             resolve({
               code: data.data.code,
-              shortlink: `${cfg.shortlinkDomain}/#${data.data.code}`,
+              shortlink: buildShortlinkUrl(domain, data.data.code, useMp4),
               original: targetUrl,
             });
           } else {

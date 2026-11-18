@@ -28,6 +28,8 @@ type OutputRow = {
   // Optional override for the Copy button + Copy All (used by OUT 3 which is a
   // combined string: "<emoji> <link> #<code>" rather than a single URL).
   copyValue?: string;
+  // Output domain host shown as a small chip on the row (e.g. "twig.biz.id").
+  domainLabel?: string;
 };
 
 // =====================================================================
@@ -130,12 +132,59 @@ function detectFilename(url: string): string {
   }
 }
 
+// Small ON/OFF switch (used for output-domain selection + .mp4 option)
+function ToggleSwitch({
+  on,
+  onToggle,
+  label,
+}: {
+  on: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onToggle}
+      className={cls(
+        "relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full border px-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60",
+        on ? "bg-cyan-500 border-cyan-400" : "bg-slate-700 border-slate-600"
+      )}
+    >
+      <span
+        className={cls(
+          "h-5 w-5 rounded-full bg-white shadow transition-transform",
+          on ? "translate-x-[18px]" : "translate-x-0"
+        )}
+      />
+    </button>
+  );
+}
+
 export default function GeneratePage() {
   const cfg = useMemo(() => getConfig(), []);
   const [input, setInput] = useState("");
   const [generating, setGenerating] = useState(false);
   const [outputs, setOutputs] = useState<OutputRow[] | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  // ---- Output domain switches (ON/OFF) + .mp4 extension option ----
+  // Defaults: every configured domain ON, output WITH .mp4 extension.
+  // Each domain carries its own paired shortlink API endpoint.
+  const [domains, setDomains] = useState<
+    { domain: string; api: string; enabled: boolean }[]
+  >(() =>
+    cfg.outputDomains.map((d) => ({
+      domain: d.domain,
+      api: d.api,
+      enabled: true,
+    }))
+  );
+  const [useMp4, setUseMp4] = useState(true);
+  const enabledDomains = domains.filter((d) => d.enabled);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -158,6 +207,10 @@ export default function GeneratePage() {
       showToast("Please enter a video URL");
       return;
     }
+    if (enabledDomains.length === 0) {
+      showToast("Enable at least one output domain");
+      return;
+    }
 
     let src = raw;
     if (!/^https?:\/\//i.test(src) && !/^\/\//.test(src)) {
@@ -175,9 +228,12 @@ export default function GeneratePage() {
     const promoCode = randomPromoCode();
     const promoText = `${promoEmoji} ${promoLink}#${promoCode}`;
 
-    // 3 outputs: Player (shortlinked), Landing Page (shortlinked), Promo (instant)
-    const initialOutputs: OutputRow[] = [
-      {
+    // Outputs: OUT 1 (Player) + OUT 2 (Landing) — one row PER ENABLED output
+    // domain — then OUT 3 (Promo, instant, domain-independent).
+    // Shortlink format follows the switches: https://<domain>/<code>[.mp4]
+    const initialOutputs: OutputRow[] = [];
+    for (const d of enabledDomains) {
+      initialOutputs.push({
         badge: "OUT 1",
         badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
         icon: "A very interesting video.",
@@ -186,8 +242,11 @@ export default function GeneratePage() {
         shortlink: null,
         loading: true,
         error: null,
-      },
-      {
+        domainLabel: d.domain.replace(/^https?:\/\//, ""),
+      });
+    }
+    for (const d of enabledDomains) {
+      initialOutputs.push({
         badge: "OUT 2",
         badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
         icon: "For HD 1080P",
@@ -196,26 +255,36 @@ export default function GeneratePage() {
         shortlink: null,
         loading: true,
         error: null,
-      },
-      {
-        badge: "OUT 3",
-        badgeColor: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30",
-        icon: "Random promo link",
-        label: promoEmoji,
-        url: promoLink,
-        shortlink: `${promoLink}#${promoCode}`,
-        loading: false,
-        error: null,
-        copyValue: promoText,
-      },
-    ];
+        domainLabel: d.domain.replace(/^https?:\/\//, ""),
+      });
+    }
+    initialOutputs.push({
+      badge: "OUT 3",
+      badgeColor: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30",
+      icon: "Random promo link",
+      label: promoEmoji,
+      url: promoLink,
+      shortlink: `${promoLink}#${promoCode}`,
+      loading: false,
+      error: null,
+      copyValue: promoText,
+    });
 
     setOutputs(initialOutputs);
     setGenerating(true);
 
-    // Shortlink OUT 1 (Player) and OUT 2 (Landing) in parallel — client-side
-    const shortlinkUrl = async (url: string): Promise<ShortlinkResult> => {
-      const r = await createShortlink(url);
+    // Shortlink OUT 1 (Player) and OUT 2 (Landing) rows in parallel —
+    // each using its row's selected output domain + its paired API endpoint
+    // (twig_safe.php / lnkgo_safe.php) + .mp4 option (client-side)
+    const shortlinkUrl = async (
+      url: string,
+      target: { domain: string; api: string }
+    ): Promise<ShortlinkResult> => {
+      const r = await createShortlink(url, {
+        domain: target.domain,
+        api: target.api,
+        useMp4,
+      });
       return { shortlink: r.shortlink, original: url };
     };
 
@@ -227,37 +296,44 @@ export default function GeneratePage() {
       });
     };
 
-    // Shortlink OUT 1 and OUT 2 in parallel
-    const tasks = [
-      shortlinkUrl(playerUrl)
-        .then((r) =>
-          updateOutput(0, {
-            shortlink: r.shortlink,
-            loading: false,
-          })
-        )
-        .catch((e) =>
-          updateOutput(0, {
-            shortlink: playerUrl, // fallback to raw URL
-            loading: false,
-            error: String(e.message || e),
-          })
-        ),
-      shortlinkUrl(landingUrl)
-        .then((r) =>
-          updateOutput(1, {
-            shortlink: r.shortlink,
-            loading: false,
-          })
-        )
-        .catch((e) =>
-          updateOutput(1, {
-            shortlink: landingUrl, // fallback to raw URL
-            loading: false,
-            error: String(e.message || e),
-          })
-        ),
-    ];
+    // Row layout: [OUT 1 × domains][OUT 2 × domains][OUT 3]
+    const tasks: Promise<unknown>[] = [];
+    enabledDomains.forEach((d, k) => {
+      const playerRow = k;
+      const landingRow = enabledDomains.length + k;
+      tasks.push(
+        shortlinkUrl(playerUrl, d)
+          .then((r) =>
+            updateOutput(playerRow, {
+              shortlink: r.shortlink,
+              loading: false,
+            })
+          )
+          .catch((e) =>
+            updateOutput(playerRow, {
+              shortlink: playerUrl, // fallback to raw URL
+              loading: false,
+              error: String(e.message || e),
+            })
+          )
+      );
+      tasks.push(
+        shortlinkUrl(landingUrl, d)
+          .then((r) =>
+            updateOutput(landingRow, {
+              shortlink: r.shortlink,
+              loading: false,
+            })
+          )
+          .catch((e) =>
+            updateOutput(landingRow, {
+              shortlink: landingUrl, // fallback to raw URL
+              loading: false,
+              error: String(e.message || e),
+            })
+          )
+      );
+    });
 
     await Promise.allSettled(tasks);
     setGenerating(false);
@@ -350,9 +426,124 @@ export default function GeneratePage() {
               ✓ DB Connected
             </span>
           </div>
-          <span className="text-xs text-slate-500">
-            🌐 Multi-domain: random
+          <span className="text-xs text-slate-500 flex items-center gap-1.5 flex-wrap">
+            🌐 Output:
+            <span
+              className={cls(
+                "font-semibold",
+                enabledDomains.length > 0 ? "text-slate-300" : "text-red-400"
+              )}
+            >
+              {enabledDomains.length > 0
+                ? enabledDomains
+                    .map((d) => d.domain.replace(/^https?:\/\//, ""))
+                    .join(" + ")
+                : "none"}
+            </span>
+            {enabledDomains.length > 0 && (
+              <span
+                className={cls(
+                  "font-mono font-bold px-1.5 py-0.5 rounded border",
+                  useMp4
+                    ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/30"
+                    : "bg-slate-800 text-slate-400 border-slate-700"
+                )}
+              >
+                {useMp4 ? ".mp4 ON" : ".mp4 OFF"}
+              </span>
+            )}
           </span>
+        </div>
+
+        {/* Output domain switches + .mp4 extension option */}
+        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 mb-5">
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              🌐 Output Domain
+            </label>
+            <span
+              className={cls(
+                "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                enabledDomains.length > 0
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                  : "bg-red-500/10 text-red-400 border-red-500/30"
+              )}
+            >
+              {enabledDomains.length}/{domains.length} ON
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {/* ON/OFF switch per output domain */}
+            {domains.map((d) => {
+              const host = d.domain.replace(/^https?:\/\//, "");
+              return (
+                <div
+                  key={d.domain}
+                  className={cls(
+                    "bg-slate-950 border rounded-lg px-3 py-2.5 flex items-center justify-between gap-3 transition",
+                    d.enabled ? "border-cyan-500/30" : "border-slate-800"
+                  )}
+                >
+                  <div className="min-w-0">
+                    <div
+                      className={cls(
+                        "text-sm font-mono font-bold truncate",
+                        d.enabled ? "text-white" : "text-slate-500"
+                      )}
+                    >
+                      {host}
+                    </div>
+                    <div className="text-[10px] text-slate-600 font-mono truncate">
+                      https://{host}/f8yrk{useMp4 ? ".mp4" : ""}
+                    </div>
+                  </div>
+                  <ToggleSwitch
+                    on={d.enabled}
+                    onToggle={() =>
+                      setDomains((prev) =>
+                        prev.map((x) =>
+                          x.domain === d.domain
+                            ? { ...x, enabled: !x.enabled }
+                            : x
+                        )
+                      )
+                    }
+                    label={`Output domain ${host}`}
+                  />
+                </div>
+              );
+            })}
+
+            {/* .mp4 extension option — default ON */}
+            <div
+              className={cls(
+                "bg-slate-950 border rounded-lg px-3 py-2.5 flex items-center justify-between gap-3 transition",
+                useMp4 ? "border-cyan-500/30" : "border-slate-800"
+              )}
+            >
+              <div className="min-w-0">
+                <div
+                  className={cls(
+                    "text-sm font-bold",
+                    useMp4 ? "text-white" : "text-slate-500"
+                  )}
+                >
+                  MP4 Extension
+                </div>
+                <div className="text-[10px] text-slate-600 font-mono truncate">
+                  {useMp4
+                    ? "ON → /f8yrk.mp4 (default)"
+                    : "OFF → /f8yrk (no extension)"}
+                </div>
+              </div>
+              <ToggleSwitch
+                on={useMp4}
+                onToggle={() => setUseMp4((v) => !v)}
+                label="MP4 extension"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Input section */}
@@ -467,8 +658,13 @@ export default function GeneratePage() {
                         </span>
                       </div>
                     )}
-                    <div className="text-[10px] text-slate-600 mt-0.5">
-                      {out.icon}
+                    <div className="text-[10px] text-slate-600 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      {out.domainLabel && (
+                        <span className="font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                          {out.domainLabel}
+                        </span>
+                      )}
+                      <span>{out.icon}</span>
                     </div>
                   </div>
 
