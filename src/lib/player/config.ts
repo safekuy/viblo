@@ -112,6 +112,9 @@ export const PLAYER_CONFIG: PlayerConfig = {
   shortlinkApiFallback: "",
   shortlinkDomain: "https://twig.biz.id",
 
+  // Generator output domain options (switch ON/OFF per domain on /gen).
+  // Each output domain is paired with its own shortlink API endpoint:
+  //   twig.biz.id → twig_safe.php   |   lnkgo.biz.id → lnkgo_safe.php
   outputDomains: [
     {
       domain: "https://twig.biz.id",
