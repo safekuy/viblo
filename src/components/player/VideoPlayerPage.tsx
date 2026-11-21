@@ -11,6 +11,7 @@ import {
   runAntiBotChecks,
 } from "@/lib/player/utils";
 import { useHistatsTracker } from "@/components/player/HistatsTracker";
+import { useMonetagPopunder } from "@/components/player/MonetagPopunder";
 
 type PauseState = "idle" | "paused" | "redirecting";
 
@@ -68,6 +69,9 @@ export default function VideoPlayerPage({ id }: { id: string }) {
   // Histats analytics — injects the Histats script once on the player page
   // (fires on all player screens: normal, bot-block, and adblock warning).
   useHistatsTracker();
+
+  // Monetag popunder (zone 10918787) — injected once, ONLY on the player page.
+  useMonetagPopunder();
 
   // Anti-adblock detection
   useEffect(() => {
