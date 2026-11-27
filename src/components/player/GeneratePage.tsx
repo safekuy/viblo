@@ -25,18 +25,10 @@ type OutputRow = {
   shortlink: string | null;
   loading: boolean;
   error: string | null;
-  // Optional override for the Copy button + Copy All (used by OUT 3 which is a
-  // combined string: "<emoji> <link> #<code>" rather than a single URL).
   copyValue?: string;
-  // Output domain host shown as a small chip on the row (e.g. "twig.biz.id").
   domainLabel?: string;
 };
 
-// =====================================================================
-// SHORT HISTORY — every successful OUT 1 / OUT 2 shortlink is recorded
-// (source CDN + shortlink) and persisted in localStorage, so the list
-// survives page reloads. Capped at HISTORY_MAX entries (newest first).
-// =====================================================================
 type HistoryEntry = {
   id: string;
   time: number;
@@ -48,8 +40,6 @@ type HistoryEntry = {
 const HISTORY_KEY = "xtubs_gen_history";
 const HISTORY_MAX = 50;
 
-// Generator settings show/hide (persisted) — lets the user collapse the
-// switch cards to keep the page compact while actually generating.
 const SETTINGS_OPEN_KEY = "xtubs_gen_settings_open";
 // Bulk batch limit — keeps the number of parallel shortlink API calls sane.
 const BULK_MAX = 10;
@@ -83,11 +73,6 @@ function fmtHistTime(t: number): string {
   return `${p(d.getDate())}/${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-// =====================================================================
-// BULK GENERATE — same output rules as the single generator
-// (OUT 1 × enabled domains, OUT 2 × enabled domains, OUT 3 promo),
-// grouped per source URL.
-// =====================================================================
 type BulkGroup = {
   id: string;
   source: string;
@@ -102,13 +87,6 @@ function rowToText(o: OutputRow): string {
   return `${o.icon}\n ${o.label}${o.shortlink || o.url}`;
 }
 
-// =====================================================================
-// OUT 3 — random emoji + random link + #3-digit code
-// =====================================================================
-// Static pools supplied by the user. OUT 3 is generated entirely on the
-// client (no shortlink API call), so it appears instantly alongside the
-// shortlink-based OUT 1 / OUT 2.
-
 const PROMO_EMOJIS: string[] = [
   "🎬➡ ",
   "🔴➡️ ",
@@ -122,36 +100,8 @@ const PROMO_EMOJIS: string[] = [
 ];
 
 const PROMO_LINKS: string[] = [
-  "https://t.co/k0VQLDnRI8",
-  "https://t.co/2B09csizQY",
-  "https://t.co/KAuKBw8CD2",
-  "https://t.co/DnXIEZGp52",
-  "https://t.co/D2vfogOaF0",
-  "https://t.co/E9oGawbWcD",
-  "https://t.co/jVV2fBy96P",
-  "https://t.co/qNC3aNIoDr",
-  "https://t.co/6s5bbFaZHk",
-  "https://t.co/AFHGdJrZ4e",
-  "https://t.co/D7sH1BlMSd",
-  "https://t.co/qhFy2wjNmD",
-  "https://t.co/rm4oH7PIdo",
-  "https://t.co/mEpQGu7ULF",
-  "https://t.co/AxrZJTLTCe",
-  "https://t.co/9uGWO6J2lh",
-  "https://t.co/5H7yNzC9Ud",
-  "https://t.co/dHzZJaxrX4",
-  "https://t.co/n4giHorZkT",
-  "https://t.co/i1PCxd9C1R",
-  "https://t.co/72vXZPaa5Y",
-  "https://t.co/b2c6FV7C6P",
-  "https://t.co/ntauEcRw25",
-  "https://t.co/udnPE7ZrBR",
-  "https://t.co/ANuC3taxhj",
-  "https://t.co/ZGZGBwwSga",
-  "https://t.co/N6rt0OePCL",
-  "https://t.co/GPWaTEFhpP",
-  "https://t.co/VGZq5YIWyW",
-  "https://t.co/bW9vdq3tOT",
+  "https://t.co/wS38Dtkuut",
+  "https://t.co/EYWySCsWlb",
 ];
 
 // Generate a random 3-character alphanumeric code (lowercase letters + digits).
