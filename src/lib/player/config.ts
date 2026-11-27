@@ -61,7 +61,7 @@ export const PLAYER_CONFIG: PlayerConfig = {
   siteBase: origin,
 
   // Two smartlink slots (button positions auto-rotate at every load)
-  smartlink1: "https://uplcm.com/4/10913282",
+  smartlink1: "https://uplcm.com/4/12340895",
   smartlink2: "https://uplcm.com/4/10913282",
 
   // Continue-banner click → opens Telegram (or any custom URL) in a new tab
